@@ -1,0 +1,2146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Regula Ambulatorial | Agendamento e Regulação</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-2: #eef3f8;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d9e1ec;
+      --primary: #1d4e89;
+      --primary-2: #0f766e;
+      --danger: #b42318;
+      --warning: #b7791f;
+      --success: #166534;
+      --soft-primary: #e6f0fb;
+      --soft-green: #e8f6f2;
+      --soft-yellow: #fff7df;
+      --soft-red: #fff1f0;
+      --shadow: 0 14px 34px rgba(31, 41, 55, 0.07);
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.45;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 284px 1fr;
+      min-height: 100vh;
+    }
+
+    .app.logged-out {
+      grid-template-columns: 1fr;
+    }
+
+    .app.logged-out .sidebar,
+    .app.logged-out .topbar {
+      display: none;
+    }
+
+    .app.logged-out main {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+    }
+
+    .app.logged-out .login-wrap {
+      width: min(1180px, 100%);
+      min-height: min(760px, calc(100vh - 56px));
+    }
+
+    .app.authenticated .nav-btn[data-screen="login"] {
+      display: none;
+    }
+
+    .nav-section.is-hidden,
+    .nav.is-hidden {
+      display: none;
+    }
+
+    .sidebar {
+      background: #0f2742;
+      color: #fff;
+      padding: 24px 18px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 26px;
+      padding: 8px 10px;
+    }
+
+    .mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: #081b2f;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.14);
+    }
+
+    .mark img {
+      width: 38px;
+      height: 38px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .brand h1 {
+      font-size: 15px;
+      margin: 0;
+      line-height: 1.15;
+    }
+
+    .brand small {
+      display: block;
+      font-size: 12px;
+      color: #c7d7ea;
+      margin-top: 3px;
+    }
+
+    .nav-section {
+      margin: 18px 0 10px;
+      padding: 0 10px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #a9bfd8;
+      font-weight: 700;
+    }
+
+    .nav {
+      display: grid;
+      gap: 7px;
+    }
+
+    .nav button {
+      width: 100%;
+      border: 0;
+      border-radius: 10px;
+      color: #dce9f8;
+      background: transparent;
+      padding: 11px 12px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      transition: 0.18s ease;
+    }
+
+    .nav button:hover,
+    .nav button.active {
+      background: rgba(255,255,255,0.11);
+      color: #fff;
+    }
+
+    .nav .icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.12);
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .sidebar-seal {
+      margin: 22px 10px 0;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,.12);
+    }
+
+    .sidebar-seal img {
+      width: 100%;
+      max-width: 190px;
+      display: block;
+      opacity: .95;
+    }
+
+    main {
+      padding: 28px;
+    }
+
+    .topbar {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: center;
+      box-shadow: var(--shadow);
+      margin-bottom: 22px;
+    }
+
+    .breadcrumb {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .topbar h2 {
+      margin: 0;
+      font-size: 21px;
+      letter-spacing: -0.03em;
+    }
+
+    .topbar p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .profile-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      white-space: nowrap;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .system-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #bde6da;
+      background: var(--soft-green);
+      color: var(--success);
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .system-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 4px rgba(22, 101, 52, .1);
+    }
+
+    .profile-switch {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--primary);
+      padding: 9px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .profile-switch:hover {
+      background: var(--soft-primary);
+      border-color: #c9ddf3;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .screen {
+      display: none;
+      animation: appear .18s ease-out;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid.cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid.cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid.cols-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      min-width: 0;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .card p {
+      color: var(--muted);
+      margin: 0 0 12px;
+      font-size: 14px;
+    }
+
+    .metric {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 134px;
+    }
+
+    .metric .value {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .metric .caption {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 700;
+      width: fit-content;
+      border: 1px solid transparent;
+    }
+
+    .tag.blue { background: var(--soft-primary); color: var(--primary); border-color: #c9ddf3; }
+    .tag.green { background: var(--soft-green); color: var(--success); border-color: #bde6da; }
+    .tag.yellow { background: var(--soft-yellow); color: var(--warning); border-color: #f4dd9a; }
+    .tag.red { background: var(--soft-red); color: var(--danger); border-color: #ffd0cb; }
+    .tag.gray { background: #eef2f7; color: #475569; border-color: #d8e0ea; }
+
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: 0.16s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn.primary { background: var(--primary); color: #fff; }
+    .btn.secondary { background: #e7edf5; color: #24364b; }
+    .btn.success { background: var(--success); color: #fff; }
+    .btn.danger { background: var(--danger); color: #fff; }
+    .btn.warning { background: #a16207; color: #fff; }
+    .btn:hover { filter: brightness(.96); transform: translateY(-1px); }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 13px;
+    }
+
+    label {
+      font-size: 13px;
+      color: #374151;
+      font-weight: 700;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 12px;
+      outline: none;
+      color: var(--ink);
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: #8bbce8;
+      box-shadow: 0 0 0 4px rgba(29, 78, 137, .09);
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      min-width: 760px;
+    }
+
+    .table-wrap.compact table {
+      min-width: 100%;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 12px;
+      text-align: left;
+      font-size: 13px;
+      vertical-align: top;
+    }
+
+    th {
+      color: #475569;
+      background: #f1f5f9;
+      font-weight: 800;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .flow {
+      display: grid;
+      gap: 10px;
+      margin: 12px 0 0;
+    }
+
+    .flow-step {
+      border-left: 4px solid var(--primary);
+      background: #f8fbfe;
+      padding: 12px 14px;
+      border-radius: 10px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .flow-step strong {
+      font-size: 13px;
+    }
+
+    .flow-step span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .login-wrap {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      min-height: calc(100vh - 56px);
+      gap: 18px;
+    }
+
+    .hero {
+      border-radius: 18px;
+      padding: 34px;
+      color: #fff;
+      background: linear-gradient(135deg, #0f2742, #145a74 62%, #0f766e);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-logo {
+      width: min(360px, 78%);
+      margin-bottom: 28px;
+      position: relative;
+      z-index: 1;
+      display: block;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 360px;
+      height: 360px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 50%;
+      right: -120px;
+      bottom: -140px;
+    }
+
+    .hero h1 {
+      margin: 0 0 14px;
+      font-size: clamp(32px, 3.6vw, 50px);
+      letter-spacing: -0.04em;
+      line-height: 1;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero p {
+      color: #d4e7f8;
+      max-width: 610px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-item {
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .hero-item strong {
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .hero-item span {
+      color: #c7d7ea;
+      font-size: 13px;
+    }
+
+    .login-card {
+      padding: 30px;
+      border-radius: 18px;
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      align-self: center;
+    }
+
+    .login-card h2 {
+      margin: 0 0 6px;
+      letter-spacing: -0.03em;
+    }
+
+    .login-card p {
+      color: var(--muted);
+      margin: 0 0 22px;
+      font-size: 14px;
+    }
+
+    .role-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .role-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px;
+      cursor: pointer;
+      background: #fff;
+      transition: 0.18s ease;
+    }
+
+    .role-card.active {
+      border-color: var(--primary);
+      background: var(--soft-primary);
+      box-shadow: 0 0 0 4px rgba(29, 78, 137, .08);
+    }
+
+    .role-card strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 3px;
+    }
+
+    .role-card span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 0;
+      margin-top: 10px;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+    }
+
+    .dotline {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--primary);
+      margin-top: 2px;
+    }
+
+    .line {
+      width: 2px;
+      flex: 1;
+      background: var(--line);
+      min-height: 42px;
+    }
+
+    .timeline-content {
+      padding: 0 0 15px;
+    }
+
+    .timeline-content strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .timeline-content span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .phone {
+      max-width: 390px;
+      border-radius: 36px;
+      border: 10px solid #1f2937;
+      background: #f3f4f6;
+      padding: 15px;
+      box-shadow: var(--shadow);
+      margin: 0 auto;
+    }
+
+    .phone-top {
+      height: 26px;
+      display: grid;
+      place-items: center;
+      color: #6b7280;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .chat {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .bubble {
+      padding: 11px 12px;
+      border-radius: 15px;
+      font-size: 13px;
+      max-width: 86%;
+    }
+
+    .bubble.system {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-top-left-radius: 5px;
+    }
+
+    .bubble.user {
+      background: #d9fdd3;
+      justify-self: end;
+      border-top-right-radius: 5px;
+    }
+
+    .chart {
+      height: 220px;
+      display: flex;
+      align-items: end;
+      gap: 14px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: linear-gradient(180deg, #fff, #f8fafc);
+    }
+
+    .bar {
+      flex: 1;
+      border-radius: 10px 10px 0 0;
+      background: linear-gradient(180deg, #4f8ec5, #1d4e89);
+      min-width: 36px;
+      position: relative;
+    }
+
+    .bar span {
+      position: absolute;
+      top: -24px;
+      width: 100%;
+      text-align: center;
+      font-size: 12px;
+      color: #475569;
+      font-weight: 800;
+    }
+
+    .legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 10px;
+    }
+
+    .legend i {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      margin-right: 5px;
+      background: var(--primary);
+    }
+
+    .loss-chart {
+      display: grid;
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .loss-row {
+      display: grid;
+      gap: 7px;
+    }
+
+    .loss-row header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .loss-track {
+      height: 18px;
+      border-radius: 999px;
+      background: #eef2f7;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+
+    .loss-fill {
+      height: 100%;
+      border-radius: inherit;
+    }
+
+    .loss-fill.primary-loss {
+      width: 61%;
+      background: linear-gradient(90deg, #b42318, #e26d5f);
+    }
+
+    .loss-fill.secondary-loss {
+      width: 39%;
+      background: linear-gradient(90deg, #a16207, #e8b44f);
+    }
+
+    .loss-kpis {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .loss-kpi {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #f8fafc;
+    }
+
+    .loss-kpi span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .loss-kpi strong {
+      display: block;
+      font-size: 24px;
+      margin-top: 3px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      background: #0f2742;
+      color: #fff;
+      border-radius: 15px;
+      padding: 14px 16px;
+      box-shadow: var(--shadow);
+      transform: translateY(120px);
+      opacity: 0;
+      transition: .22s ease;
+      z-index: 30;
+      max-width: 360px;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .split-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 12px;
+      margin-bottom: 13px;
+    }
+
+    .security-note {
+      background: #fff7df;
+      border: 1px solid #f0d68a;
+      color: #785a12;
+      padding: 12px 14px;
+      border-radius: 14px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .ops-panel {
+      margin-top: 16px;
+      border: 1px solid #c9ddf3;
+      background: #f8fbfe;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .ops-panel strong {
+      display: block;
+      font-size: 13px;
+      color: var(--primary);
+    }
+
+    .ops-panel span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .ops-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .ops-meta .tag {
+      background: #fff;
+    }
+
+    .text-link {
+      border: 0;
+      background: transparent;
+      color: var(--primary);
+      font-weight: 800;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .text-link:hover {
+      text-decoration: underline;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 39, 66, .56);
+      z-index: 80;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      width: min(560px, 100%);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 28px 70px rgba(15, 39, 66, .24);
+      padding: 22px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .modal-header h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+    }
+
+    .modal-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .modal-close {
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 50%;
+      background: #eef2f7;
+      color: #334155;
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .choice-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      padding: 14px;
+      cursor: pointer;
+      text-align: left;
+      display: grid;
+      gap: 5px;
+    }
+
+    .choice-card:hover {
+      border-color: #8bbce8;
+      box-shadow: 0 0 0 4px rgba(29, 78, 137, .08);
+    }
+
+    .choice-card strong {
+      font-size: 13px;
+    }
+
+    .choice-card span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .patient-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .patient-summary .card {
+      box-shadow: none;
+      padding: 14px;
+    }
+
+    .patient-summary strong {
+      display: block;
+      font-size: 20px;
+      margin-top: 3px;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .row-actions .btn {
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+
+    .hidden-mobile {
+      display: inline;
+    }
+
+    @media (max-width: 1040px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: relative;
+        height: auto;
+      }
+
+      .nav {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .grid.cols-2,
+      .grid.cols-3,
+      .grid.cols-4,
+      .login-wrap {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .topbar-actions {
+        justify-content: flex-start;
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 640px) {
+      main {
+        padding: 16px;
+      }
+
+      .sidebar {
+        padding: 18px 12px;
+      }
+
+      .nav {
+        grid-template-columns: 1fr;
+      }
+
+      .role-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .choice-grid,
+      .patient-summary,
+      .loss-kpis {
+        grid-template-columns: 1fr;
+      }
+
+      .hidden-mobile {
+        display: none;
+      }
+
+      .hero, .login-card {
+        padding: 22px;
+      }
+    }
+
+    @media print {
+      .sidebar, .topbar .profile-pill, .toast {
+        display: none !important;
+      }
+
+      .app {
+        display: block;
+      }
+
+      .screen {
+        display: block;
+        break-after: page;
+      }
+
+      main {
+        padding: 0;
+      }
+
+      .card {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app logged-out" id="appRoot">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="mark"><img src="assets/brasao-pernambuco.png" alt="Brasão de Pernambuco"></div>
+        <div>
+          <h1>Regulação Ambulatorial</h1>
+          <small>Gestão de acesso e filas</small>
+        </div>
+      </div>
+
+      <div class="nav-section">Acesso</div>
+      <div class="nav">
+        <button class="nav-btn active" data-screen="login"><span class="icon">AC</span> Acesso</button>
+        <button class="nav-btn" data-screen="dashboard"><span class="icon">VG</span> Visão Geral</button>
+      </div>
+
+      <div class="nav-section">Agenda e CMCE</div>
+      <div class="nav">
+        <button class="nav-btn" data-screen="envio-agenda"><span class="icon">AG</span> Nova Agenda</button>
+        <button class="nav-btn" data-screen="validacao-agenda"><span class="icon">VA</span> Validação</button>
+        <button class="nav-btn" data-screen="inconsistencias"><span class="icon">PE</span> Pendências</button>
+      </div>
+
+      <div class="nav-section">Regulação</div>
+      <div class="nav">
+        <button class="nav-btn" data-screen="solicitacao"><span class="icon">SO</span> Solicitações</button>
+        <button class="nav-btn" data-screen="avaliacao"><span class="icon">MR</span> Avaliação Médica</button>
+        <button class="nav-btn" data-screen="agendamento"><span class="icon">AT</span> Agendamentos</button>
+        <button class="nav-btn" data-screen="pacientes-confirmados"><span class="icon">CF</span> Confirmados</button>
+      </div>
+
+      <div class="nav-section">Paciente e Gestão</div>
+      <div class="nav">
+        <button class="nav-btn" data-screen="paciente"><span class="icon">PC</span> Confirmações</button>
+        <button class="nav-btn" data-screen="central"><span class="icon">CT</span> Cotas</button>
+        <button class="nav-btn" data-screen="filas"><span class="icon">FI</span> Filas</button>
+        <button class="nav-btn" data-screen="indicadores"><span class="icon">BI</span> Indicadores</button>
+      </div>
+
+      <div class="sidebar-seal">
+        <img src="assets/secretaria-saude-pernambuco.png" alt="Secretaria de Saúde de Pernambuco">
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div>
+          <div class="breadcrumb">Regulação ambulatorial / <span id="currentArea">Acesso</span></div>
+          <h2 id="pageTitle">Login do Sistema</h2>
+          <p id="pageSubtitle">Entrada única com perfis para Unidade Executante, Secretaria Municipal de Saúde, Médico Regulador, Central e Paciente.</p>
+        </div>
+        <div class="topbar-actions">
+          <div class="system-pill"><span class="system-dot"></span> CMCE sincronizado</div>
+          <button class="profile-switch" type="button" onclick="switchProfile()">Trocar perfil</button>
+          <div class="profile-pill">
+            <div class="avatar">UE</div>
+            <div>
+              <strong id="currentRole">Unidade Executante</strong><br>
+              <span class="subtle">Perfil ativo</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="screen active" id="login">
+        <div class="login-wrap">
+          <div class="hero">
+            <div>
+              <img class="hero-logo" src="assets/secretaria-saude-pernambuco.png" alt="Secretaria de Saúde de Pernambuco">
+              <h1>Regula Ambulatorial</h1>
+              <p>Plataforma integrada para gestão de agendas, regulação médica, distribuição de cotas, comunicação com pacientes e monitoramento das filas assistenciais.</p>
+              <div class="hero-list">
+                <div class="hero-item">
+                  <strong>Agenda integrada</strong>
+                  <span>Da oferta mensal da unidade executante ao cadastro no CMCE.</span>
+                </div>
+                <div class="hero-item">
+                  <strong>Regulação clínica</strong>
+                  <span>Solicitações priorizadas, avaliadas e liberadas para agendamento conforme perfil de acesso.</span>
+                </div>
+                <div class="hero-item">
+                  <strong>Controle operacional</strong>
+                  <span>Indicadores, alertas, remanejamento de cotas e trilhas de auditoria em uma única visão.</span>
+                </div>
+              </div>
+            </div>
+            <p class="subtle" style="color:#c7d7ea;margin-top:28px;">Ambiente de homologação | Base assistencial de treinamento</p>
+          </div>
+
+          <div class="login-card">
+            <h2>Acessar sistema</h2>
+            <p>Selecione o perfil operacional e informe suas credenciais.</p>
+
+            <div class="role-cards">
+              <div class="role-card active" data-profile="unidade" data-role="Unidade Executante" data-avatar="UE">
+                <strong>Unidade Executante</strong>
+                <span>Envia agendas, registra atendimento e faltas.</span>
+              </div>
+              <div class="role-card" data-profile="apoiador" data-role="Apoiador de Regulação" data-avatar="AR">
+                <strong>Apoiador</strong>
+                <span>Valida agendas e trata inconsistências.</span>
+              </div>
+              <div class="role-card" data-profile="sms" data-role="SMS Municipal" data-avatar="SM">
+                <strong>SMS</strong>
+                <span>Registra solicitações e agenda pacientes.</span>
+              </div>
+              <div class="role-card" data-profile="medico" data-role="Médico Regulador" data-avatar="MR">
+                <strong>Médico Regulador</strong>
+                <span>Avalia, autoriza, recusa ou retorna solicitações.</span>
+              </div>
+              <div class="role-card" data-profile="central" data-role="Central de Regulação" data-avatar="CR">
+                <strong>Central</strong>
+                <span>Distribui cotas, monitora filas e indicadores.</span>
+              </div>
+              <div class="role-card" data-profile="paciente" data-role="Paciente" data-avatar="PA">
+                <strong>Paciente</strong>
+                <span>Confirma presença ou solicita remarcação.</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Login</label>
+              <input value="usuario.regulacao" />
+            </div>
+            <div class="field">
+              <label>Senha</label>
+              <input type="password" value="regulacao2026" />
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin:-4px 0 14px;">
+              <button class="text-link" type="button" onclick="openPasswordModal()">Esqueci minha senha</button>
+            </div>
+            <button class="btn primary" onclick="login()">Entrar no sistema</button>
+
+            <div class="security-note" style="margin-top:18px;">
+              Acesso restrito. Permissões, telas e trilhas de auditoria são aplicadas conforme o perfil selecionado.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="dashboard">
+        <div class="grid cols-4">
+          <div class="card metric">
+            <span class="tag blue">Agendas</span>
+            <div class="value">38</div>
+            <div class="caption">agendas aguardando validação</div>
+          </div>
+          <div class="card metric">
+            <span class="tag yellow">Solicitações</span>
+            <div class="value">124</div>
+            <div class="caption">pendentes de regulação médica</div>
+          </div>
+          <div class="card metric">
+            <span class="tag red">Absenteísmo</span>
+            <div class="value">18%</div>
+            <div class="caption">faltas registradas no mês corrente</div>
+          </div>
+          <div class="card metric">
+            <span class="tag green">Vagas</span>
+            <div class="value">217</div>
+            <div class="caption">vagas disponíveis para agendamento</div>
+          </div>
+        </div>
+
+        <div class="ops-panel">
+          <div>
+            <strong>Operação em acompanhamento</strong>
+            <span>Competência julho/2026 · GERES IV · atualização local em 05/07/2026 às 23:40</span>
+          </div>
+          <div class="ops-meta">
+            <span class="tag green">CMCE online</span>
+            <span class="tag blue">217 vagas abertas</span>
+            <span class="tag yellow">12 pendências críticas</span>
+          </div>
+        </div>
+
+        <div class="grid cols-2" style="margin-top:16px;">
+          <div class="card">
+            <div class="split-title">
+              <div>
+                <h3>Fluxo operacional resumido</h3>
+                <p>Visão geral dos estágios do processo de regulação ambulatorial.</p>
+              </div>
+              <span class="tag blue">Ponta a ponta</span>
+            </div>
+            <div class="timeline">
+              <div class="timeline-item">
+                <div class="dotline"><div class="dot"></div><div class="line"></div></div>
+                <div class="timeline-content"><strong>1. Unidade envia agenda</strong><span>Status inicial: Aguardando Validação.</span></div>
+              </div>
+              <div class="timeline-item">
+                <div class="dotline"><div class="dot"></div><div class="line"></div></div>
+                <div class="timeline-content"><strong>2. Apoiador valida e cadastra no CMCE</strong><span>Campos, datas, feriados, duplicidades e disponibilidade.</span></div>
+              </div>
+              <div class="timeline-item">
+                <div class="dotline"><div class="dot"></div><div class="line"></div></div>
+                <div class="timeline-content"><strong>3. Secretaria Municipal registra solicitação</strong><span>Pedido clínico aguarda avaliação médica.</span></div>
+              </div>
+              <div class="timeline-item">
+                <div class="dotline"><div class="dot"></div></div>
+                <div class="timeline-content"><strong>4. Paciente é agendado, notificado e atendido</strong><span>Confirmação, remarcação, falta ou atendimento realizado.</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Alertas operacionais</h3>
+            <p>Itens que exigem ação dos perfis responsáveis.</p>
+            <div class="table-wrap compact">
+              <table>
+                <thead>
+                  <tr><th>Alerta</th><th>Responsável</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Agenda com conflito de horário</td><td>Apoiador</td><td><span class="tag red">Crítico</span></td></tr>
+                  <tr><td>Paciente não confirmou presença</td><td>SMS Municipal</td><td><span class="tag yellow">Atenção</span></td></tr>
+                  <tr><td>Cotas ociosas em cardiologia</td><td>Central</td><td><span class="tag blue">Remanejar</span></td></tr>
+                  <tr><td>Solicitação retornada com orientação</td><td>SMS Municipal</td><td><span class="tag gray">Ajustar</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="envio-agenda">
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>Enviar agenda mensal</h3>
+            <p>Formulário da Unidade Executante para informar escala, competência e vagas ofertadas.</p>
+            <div class="grid cols-2">
+              <div class="field"><label>Unidade de Saúde</label><input value="Hospital Regional Agreste" /></div>
+              <div class="field"><label>CNES</label><input value="0001234" /></div>
+              <div class="field"><label>Nome da Escala</label><input value="Cardiologia — manhã" /></div>
+              <div class="field"><label>Grupo de Agendamento</label><select><option>Consulta Especializada</option><option>Exame</option></select></div>
+              <div class="field"><label>Item de Agendamento</label><input value="Consulta em Cardiologia" /></div>
+              <div class="field"><label>Tipo de Atendimento</label><select><option>Primeira Consulta</option><option>Retorno</option></select></div>
+              <div class="field"><label>Mês de Competência</label><input type="month" value="2026-07" /></div>
+              <div class="field"><label>Dias da Semana</label><select><option>Segunda e quarta</option><option>Terça e quinta</option><option>Sexta</option></select></div>
+              <div class="field"><label>Turno</label><select><option>Manhã</option><option>Tarde</option></select></div>
+              <div class="field"><label>Horário</label><input type="time" value="08:00" /></div>
+              <div class="field"><label>Quantidade de Vagas</label><input type="number" value="40" /></div>
+              <div class="field"><label>Sexo</label><select><option>Todos</option><option>Feminino</option><option>Masculino</option></select></div>
+            </div>
+            <div class="field"><label>Observações</label><textarea>Bloqueio no dia 15/07 por manutenção da sala.</textarea></div>
+            <div class="actions">
+              <button class="btn primary" onclick="submitAgenda()">Enviar agenda</button>
+              <button class="btn secondary" onclick="toast('Rascunho salvo para edição posterior.')">Salvar rascunho</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Validações automáticas previstas</h3>
+            <p>Regras aplicadas antes da agenda seguir para análise administrativa.</p>
+            <div class="flow">
+              <div class="flow-step"><strong>Campos obrigatórios</strong><span>Unidade, escala, item, competência, turno, horário e quantidade de vagas.</span></div>
+              <div class="flow-step"><strong>Compatibilidade de datas</strong><span>Dia da semana e mês de competência devem estar coerentes.</span></div>
+              <div class="flow-step"><strong>Conflito de agenda</strong><span>Evita sobreposição de horários para o mesmo profissional.</span></div>
+              <div class="flow-step"><strong>Encaminhamento</strong><span>Ao confirmar, o sistema notifica o Apoiador de Regulação.</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="validacao-agenda">
+        <div class="card">
+          <div class="split-title">
+            <div>
+              <h3>Agendas pendentes de validação</h3>
+              <p>Lista operacional para Apoiador de Regulação.</p>
+            </div>
+            <button class="btn secondary" onclick="toast('Filtros aplicados: competência julho/2026.')">Filtrar</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th><th>Unidade</th><th>Especialidade</th><th>Competência</th><th>Vagas</th><th>Status</th><th>Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>AG-1027</td><td>Hospital Regional Agreste</td><td>Cardiologia</td><td>07/2026</td><td>40</td><td><span class="tag yellow">Aguardando</span></td>
+                  <td><button class="btn primary" onclick="toast('Agenda AG-1027 validada e encaminhada ao CMCE.')">Validar</button></td>
+                </tr>
+                <tr>
+                  <td>AG-1028</td><td>Policlínica Norte</td><td>Endocrinologia</td><td>07/2026</td><td>24</td><td><span class="tag red">Conflito</span></td>
+                  <td><button class="btn warning" onclick="goTo('inconsistencias')">Devolver</button></td>
+                </tr>
+                <tr>
+                  <td>AG-1029</td><td>Centro Diagnóstico Recife</td><td>Ultrassonografia</td><td>07/2026</td><td>60</td><td><span class="tag blue">Pré-validada</span></td>
+                  <td><button class="btn success" onclick="toastAndGo('Agenda cadastrada no CMCE. ID externo CMCE-88912.', 'solicitacao')">Cadastrar no CMCE</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid cols-2" style="margin-top:16px;">
+          <div class="card">
+            <h3>Checklist da validação</h3>
+            <div class="flow">
+              <div class="flow-step"><strong>1. Conferir profissional e item</strong><span>Confirma se a escala corresponde ao procedimento ofertado.</span></div>
+              <div class="flow-step"><strong>2. Conferir datas e feriados</strong><span>Verifica se há incompatibilidade com a competência.</span></div>
+              <div class="flow-step"><strong>3. Verificar duplicidades</strong><span>Consulta o CMCE e a base interna para evitar agenda duplicada.</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Cadastro no CMCE</h3>
+            <p>Quando validada, a agenda tem seus dados enviados ao CMCE via camada de integração.</p>
+            <div class="actions">
+              <button class="btn primary" onclick="toast('Dados enviados para o CMCE com sucesso.')">Enviar ao CMCE</button>
+              <button class="btn secondary" onclick="toast('Registro de auditoria gerado para a ação.')">Ver auditoria</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="inconsistencias">
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>Devolver agenda com inconsistência</h3>
+            <p>Fluxo usado quando o Apoiador encontra erro na agenda enviada.</p>
+            <div class="field"><label>Agenda</label><input value="AG-1028 — Endocrinologia — Policlínica Norte" /></div>
+            <div class="field"><label>Campo inconsistente</label><select><option>Horário</option><option>Data</option><option>Quantidade de vagas</option><option>Profissional</option></select></div>
+            <div class="field"><label>Descrição da inconsistência</label><textarea>Há sobreposição de horário com outra escala ativa para o mesmo profissional.</textarea></div>
+            <div class="actions">
+              <button class="btn warning" onclick="toast('Agenda devolvida para correção e unidade executante notificada.')">Devolver para correção</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Correção pela Unidade Executante</h3>
+            <p>A unidade acessa a agenda devolvida, visualiza o erro e reenvia para validação.</p>
+            <div class="table-wrap compact">
+              <table>
+                <thead><tr><th>Campo</th><th>Valor anterior</th><th>Novo valor</th></tr></thead>
+                <tbody>
+                  <tr><td>Horário</td><td>08:00</td><td>10:00</td></tr>
+                  <tr><td>Turno</td><td>Manhã</td><td>Manhã</td></tr>
+                  <tr><td>Status</td><td>Devolvida</td><td>Aguardando Validação</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="actions">
+              <button class="btn primary" onclick="toastAndGo('Correção submetida. Status alterado para Aguardando Validação.', 'validacao-agenda')">Reenviar agenda</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="solicitacao">
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>Registrar solicitação do paciente</h3>
+            <p>Formulário da Secretaria Municipal de Saúde (SMS) para encaminhar o paciente à regulação.</p>
+            <div class="grid cols-2">
+              <div class="field"><label>Paciente</label><input value="Maria José da Silva" /></div>
+              <div class="field"><label>CNS/CPF</label><input value="000.000.000-00" /></div>
+              <div class="field"><label>Município</label><input value="Caruaru" /></div>
+              <div class="field"><label>Especialidade/Exame</label><select><option>Cardiologia</option><option>Endocrinologia</option><option>Ultrassonografia</option></select></div>
+              <div class="field"><label>Prioridade</label><select><option>Rotina</option><option>Prioridade média</option><option>Alta prioridade</option></select></div>
+              <div class="field"><label>Unidade solicitante</label><input value="UBS Centro" /></div>
+            </div>
+            <div class="field"><label>Justificativa clínica</label><textarea>Paciente com dor torácica aos esforços e histórico familiar de cardiopatia. Solicita avaliação cardiológica.</textarea></div>
+            <div class="actions">
+              <button class="btn primary" onclick="toastAndGo('Solicitação registrada com status Aguardando Regulação.', 'avaliacao')">Inserir solicitação</button>
+              <button class="btn secondary" onclick="toast('Campos obrigatórios validados.')">Validar dados</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Status da solicitação</h3>
+            <div class="flow">
+              <div class="flow-step"><strong>Protocolo gerado</strong><span>SR-2026-000873.</span></div>
+              <div class="flow-step"><strong>Status</strong><span>Aguardando avaliação do Médico Regulador.</span></div>
+              <div class="flow-step"><strong>Próxima etapa</strong><span>Médico avalia dados clínicos e decide: autorizar, recusar ou retornar com orientações.</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="avaliacao">
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="split-title">
+              <div>
+                <h3>Avaliação médica reguladora</h3>
+                <p>Tela do Médico Regulador para julgamento da solicitação.</p>
+              </div>
+              <span class="tag yellow">Pendente</span>
+            </div>
+            <div class="table-wrap compact">
+              <table>
+                <tbody>
+                  <tr><th>Protocolo</th><td>SR-2026-000873</td></tr>
+                  <tr><th>Paciente</th><td>Maria José da Silva</td></tr>
+                  <tr><th>Município</th><td>Caruaru</td></tr>
+                  <tr><th>Procedimento</th><td>Consulta em Cardiologia</td></tr>
+                  <tr><th>Justificativa</th><td>Dor torácica aos esforços e histórico familiar de cardiopatia.</td></tr>
+                  <tr><th>Prioridade</th><td><span class="tag yellow">Média</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="field" style="margin-top:14px;">
+              <label>Parecer médico</label>
+              <textarea>Solicitação pertinente. Autorizar consulta em cardiologia clínica.</textarea>
+            </div>
+            <div class="actions">
+              <button class="btn success" onclick="toastAndGo('Solicitação autorizada e liberada para agendamento.', 'agendamento')">Autorizar</button>
+              <button class="btn danger" onclick="toast('Solicitação recusada com motivo registrado.')">Recusar</button>
+              <button class="btn warning" onclick="toast('Solicitação retornada à Secretaria Municipal de Saúde com orientações.')">Retornar com orientações</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Fila de avaliação</h3>
+            <p>Solicitações organizadas por prioridade e data de entrada.</p>
+            <div class="table-wrap compact">
+              <table>
+                <thead><tr><th>Protocolo</th><th>Especialidade</th><th>Prioridade</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>SR-2026-000873</td><td>Cardiologia</td><td><span class="tag yellow">Média</span></td><td>Pendente</td></tr>
+                  <tr><td>SR-2026-000874</td><td>Neurologia</td><td><span class="tag red">Alta</span></td><td>Pendente</td></tr>
+                  <tr><td>SR-2026-000875</td><td>Endocrinologia</td><td><span class="tag gray">Rotina</span></td><td>Pendente</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="agendamento">
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>Agendar paciente</h3>
+            <p>Tela da Secretaria Municipal de Saúde (SMS) para escolher vaga disponível após autorização da regulação.</p>
+            <div class="field"><label>Solicitação autorizada</label><input value="SR-2026-000873 — Cardiologia" /></div>
+            <div class="field"><label>Paciente</label><input value="Maria José da Silva" /></div>
+            <div class="field"><label>Vaga disponível</label><select><option>15/07/2026 — 08:00 — Hospital Regional Agreste</option><option>17/07/2026 — 09:30 — Policlínica Norte</option></select></div>
+            <div class="field"><label>Telefone para contato</label><input value="(81) 99999-0000" /></div>
+            <div class="actions">
+              <button class="btn primary" onclick="toastAndGo('Paciente agendado e notificação enviada por WhatsApp/mensagem de texto.', 'paciente')">Confirmar agendamento</button>
+              <button class="btn secondary" onclick="toast('Disponibilidade atualizada a partir do CMCE.')">Atualizar vagas</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Lista de agendamentos do dia</h3>
+            <div class="table-wrap compact">
+              <table>
+                <thead><tr><th>Horário</th><th>Paciente</th><th>Procedimento</th><th>Status</th><th>Ação</th></tr></thead>
+                <tbody>
+                  <tr><td>08:00</td><td>Maria José</td><td>Cardiologia</td><td><span class="tag blue">Agendada</span></td><td><button class="btn success" onclick="toast('Atendimento registrado como realizado.')">Atendido</button></td></tr>
+                  <tr><td>08:30</td><td>João Carlos</td><td>Cardiologia</td><td><span class="tag yellow">Não confirmou</span></td><td><button class="btn danger" onclick="toast('Falta registrada. Vaga liberada para remanejamento.')">Falta</button></td></tr>
+                  <tr><td>09:00</td><td>Ana Beatriz</td><td>Cardiologia</td><td><span class="tag green">Confirmada</span></td><td><button class="btn success" onclick="toast('Atendimento registrado como realizado.')">Atendido</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="pacientes-confirmados">
+        <div class="patient-summary">
+          <div class="card">
+            <span class="tag green">Confirmados</span>
+            <strong>31</strong>
+            <span class="subtle">pacientes com presença confirmada</span>
+          </div>
+          <div class="card">
+            <span class="tag yellow">Remarcações</span>
+            <strong>6</strong>
+            <span class="subtle">solicitações em análise pela SMS Municipal</span>
+          </div>
+          <div class="card">
+            <span class="tag red">Risco de falta</span>
+            <strong>4</strong>
+            <span class="subtle">pacientes sem contato recente</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="split-title">
+            <div>
+              <h3>Pacientes confirmados</h3>
+              <p>Lista operacional para acompanhamento da agenda do dia, cancelamentos, remarcações e registro de faltas.</p>
+            </div>
+            <span class="tag blue">15/07/2026</span>
+          </div>
+
+          <div class="grid cols-3">
+            <div class="field"><label>Especialidade</label><select><option>Cardiologia</option><option>Endocrinologia</option><option>Ultrassonografia</option></select></div>
+            <div class="field"><label>Unidade executante</label><select><option>Hospital Regional Agreste</option><option>Policlínica Norte</option><option>Centro Diagnóstico Recife</option></select></div>
+            <div class="field"><label>Status</label><select><option>Confirmados</option><option>Remarcação solicitada</option><option>Cancelados</option><option>Faltas registradas</option></select></div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Horário</th><th>Paciente</th><th>CNS/CPF</th><th>Procedimento</th><th>Contato</th><th>Status</th><th>Ações</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>08:00</td><td>Maria José da Silva</td><td>000.000.000-00</td><td>Cardiologia</td><td>(81) 99999-0000</td><td><span class="tag green">Confirmada</span></td>
+                  <td><div class="row-actions"><button class="btn danger" onclick="toast('Agendamento cancelado e vaga liberada para remanejamento.')">Cancelar</button><button class="btn warning" onclick="toast('Paciente direcionado para remarcação pela SMS Municipal.')">Remarcar</button><button class="btn secondary" onclick="openAbsenceModal('Maria José da Silva', '08:00', 'Cardiologia')">Registrar falta</button></div></td>
+                </tr>
+                <tr>
+                  <td>08:30</td><td>Ana Beatriz Santos</td><td>111.111.111-11</td><td>Cardiologia</td><td>(81) 98888-1010</td><td><span class="tag green">Confirmada</span></td>
+                  <td><div class="row-actions"><button class="btn danger" onclick="toast('Agendamento cancelado e vaga liberada para remanejamento.')">Cancelar</button><button class="btn warning" onclick="toast('Paciente direcionado para remarcação pela SMS Municipal.')">Remarcar</button><button class="btn secondary" onclick="openAbsenceModal('Ana Beatriz Santos', '08:30', 'Cardiologia')">Registrar falta</button></div></td>
+                </tr>
+                <tr>
+                  <td>09:00</td><td>João Carlos Pereira</td><td>222.222.222-22</td><td>Cardiologia</td><td>(81) 97777-2020</td><td><span class="tag green">Confirmada</span></td>
+                  <td><div class="row-actions"><button class="btn danger" onclick="toast('Agendamento cancelado e vaga liberada para remanejamento.')">Cancelar</button><button class="btn warning" onclick="toast('Paciente direcionado para remarcação pela SMS Municipal.')">Remarcar</button><button class="btn secondary" onclick="openAbsenceModal('João Carlos Pereira', '09:00', 'Cardiologia')">Registrar falta</button></div></td>
+                </tr>
+                <tr>
+                  <td>09:30</td><td>Carla Menezes Lima</td><td>333.333.333-33</td><td>Cardiologia</td><td>(81) 96666-3030</td><td><span class="tag green">Confirmada</span></td>
+                  <td><div class="row-actions"><button class="btn danger" onclick="toast('Agendamento cancelado e vaga liberada para remanejamento.')">Cancelar</button><button class="btn warning" onclick="toast('Paciente direcionado para remarcação pela SMS Municipal.')">Remarcar</button><button class="btn secondary" onclick="openAbsenceModal('Carla Menezes Lima', '09:30', 'Cardiologia')">Registrar falta</button></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="paciente">
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>Canal automatizado do paciente</h3>
+            <p>Canal de confirmação de presença e solicitação de remarcação.</p>
+            <div class="phone">
+              <div class="phone-top">WhatsApp — Regulação PE</div>
+              <div class="chat">
+                <div class="bubble system">Olá, Maria. Sua consulta em Cardiologia foi agendada para 15/07/2026 às 08:00 no Hospital Regional Agreste.</div>
+                <div class="bubble system">Confirme sua presença ou solicite remarcação.</div>
+                <div class="bubble user">Confirmar presença</div>
+                <div class="bubble system">Presença confirmada. Leve documento com foto, cartão SUS e encaminhamento.</div>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn success" onclick="toastAndGo('Presença confirmada pelo paciente.', 'pacientes-confirmados')">Confirmar presença</button>
+              <button class="btn warning" onclick="toast('Solicitação de remarcação registrada e SMS Municipal notificada.')">Registrar remarcação</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Regras do fluxo do paciente</h3>
+            <div class="flow">
+              <div class="flow-step"><strong>Confirma presença</strong><span>Agendamento recebe status Confirmado.</span></div>
+              <div class="flow-step"><strong>Solicita remarcação</strong><span>Vaga pode ser liberada, SMS Municipal é notificada e paciente retorna ao fluxo de agendamento.</span></div>
+              <div class="flow-step"><strong>Não responde</strong><span>Sistema mantém alerta para contato ativo da SMS Municipal.</span></div>
+              <div class="flow-step"><strong>Falta registrada</strong><span>Absenteísmo é contabilizado e vaga pode entrar em remanejamento.</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="central">
+        <div class="grid cols-3">
+          <div class="card metric">
+            <span class="tag blue">Cotas liberadas</span>
+            <div class="value">520</div>
+            <div class="caption">distribuídas entre GERES e municípios</div>
+          </div>
+          <div class="card metric">
+            <span class="tag yellow">Cotas ociosas</span>
+            <div class="value">74</div>
+            <div class="caption">sugeridas para remanejamento</div>
+          </div>
+          <div class="card metric">
+            <span class="tag green">Municípios atendidos</span>
+            <div class="value">32</div>
+            <div class="caption">com vagas ativas no mês</div>
+          </div>
+        </div>
+
+        <div class="grid cols-2" style="margin-top:16px;">
+          <div class="card">
+            <h3>Liberar cotas para distribuição</h3>
+            <div class="field"><label>Especialidade</label><select><option>Cardiologia</option><option>Endocrinologia</option><option>Neurologia</option></select></div>
+            <div class="field"><label>Destino</label><select><option>GERES IV</option><option>GERES I</option><option>Município específico</option></select></div>
+            <div class="field"><label>Quantidade</label><input type="number" value="40" /></div>
+            <div class="actions">
+              <button class="btn primary" onclick="toast('Cotas liberadas e destinatários notificados.')">Liberar cotas</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Remanejar cotas</h3>
+            <div class="table-wrap compact">
+              <table>
+                <thead><tr><th>Origem</th><th>Destino sugerido</th><th>Especialidade</th><th>Qtd.</th><th>Ação</th></tr></thead>
+                <tbody>
+                  <tr><td>Município A</td><td>Município B</td><td>Cardiologia</td><td>12</td><td><button class="btn primary" onclick="toast('Remanejamento registrado com histórico de auditoria.')">Confirmar</button></td></tr>
+                  <tr><td>GERES II</td><td>GERES IV</td><td>Endocrinologia</td><td>9</td><td><button class="btn primary" onclick="toast('Remanejamento registrado com histórico de auditoria.')">Confirmar</button></td></tr>
+                  <tr><td>Município C</td><td>Município D</td><td>Neurologia</td><td>6</td><td><button class="btn primary" onclick="toast('Remanejamento registrado com histórico de auditoria.')">Confirmar</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="filas">
+        <div class="card">
+          <div class="split-title">
+            <div>
+              <h3>Monitoramento de filas de espera</h3>
+              <p>Central acompanha tamanho da fila, tempo médio e prioridade por especialidade.</p>
+            </div>
+            <button class="btn secondary" onclick="toast('Relatório de filas exportado em PDF.')">Exportar fila</button>
+          </div>
+
+          <div class="grid cols-3">
+            <div class="field"><label>Especialidade</label><select><option>Todas</option><option>Cardiologia</option><option>Endocrinologia</option></select></div>
+            <div class="field"><label>GERES</label><select><option>Todas</option><option>I</option><option>IV</option></select></div>
+            <div class="field"><label>Município</label><select><option>Todos</option><option>Caruaru</option><option>Recife</option></select></div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Especialidade</th><th>Fila atual</th><th>Entradas</th><th>Saídas</th><th>Tempo médio</th><th>Risco</th></tr></thead>
+              <tbody>
+                <tr><td>Cardiologia</td><td>342</td><td>98</td><td>71</td><td>64 dias</td><td><span class="tag red">Alto</span></td></tr>
+                <tr><td>Endocrinologia</td><td>210</td><td>54</td><td>61</td><td>38 dias</td><td><span class="tag yellow">Médio</span></td></tr>
+                <tr><td>Ultrassonografia</td><td>148</td><td>42</td><td>57</td><td>21 dias</td><td><span class="tag green">Controlado</span></td></tr>
+                <tr><td>Neurologia</td><td>287</td><td>76</td><td>44</td><td>72 dias</td><td><span class="tag red">Alto</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="indicadores">
+        <div class="grid cols-2">
+          <div class="card">
+            <div class="split-title">
+              <div>
+                <h3>Painel de indicadores</h3>
+                <p>Indicadores gerenciais para acompanhamento da operação.</p>
+              </div>
+              <button class="btn secondary" onclick="toast('Indicadores exportados para relatório gerencial.')">Exportar</button>
+            </div>
+            <div class="chart" aria-label="Gráfico de barras de indicadores">
+              <div class="bar" style="height: 78%;"><span>78%</span></div>
+              <div class="bar" style="height: 52%;"><span>52%</span></div>
+              <div class="bar" style="height: 34%;"><span>34%</span></div>
+              <div class="bar" style="height: 66%;"><span>66%</span></div>
+              <div class="bar" style="height: 44%;"><span>44%</span></div>
+            </div>
+            <div class="legend">
+              <span><i></i>Ocupação</span>
+              <span><i></i>Regulação</span>
+              <span><i></i>Absenteísmo</span>
+              <span><i></i>Agendamentos</span>
+              <span><i></i>Remanejamentos</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Resumo dos indicadores</h3>
+            <div class="table-wrap compact">
+              <table>
+                <thead><tr><th>Indicador</th><th>Valor</th><th>Leitura</th></tr></thead>
+                <tbody>
+                  <tr><td>Taxa de ocupação de vagas</td><td>78%</td><td><span class="tag green">Adequada</span></td></tr>
+                  <tr><td>Solicitações reguladas no prazo</td><td>52%</td><td><span class="tag yellow">Atenção</span></td></tr>
+                  <tr><td>Absenteísmo</td><td>18%</td><td><span class="tag red">Elevado</span></td></tr>
+                  <tr><td>Perda primária</td><td>11</td><td><span class="tag red">Priorizar contato ativo</span></td></tr>
+                  <tr><td>Perda secundária</td><td>7</td><td><span class="tag yellow">Revisar remanejamento</span></td></tr>
+                  <tr><td>Vagas remanejadas</td><td>44%</td><td><span class="tag blue">Em execução</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="actions">
+              <button class="btn primary" onclick="toast('Painel atualizado com dados mais recentes.')">Atualizar painel</button>
+              <button class="btn secondary" onclick="toast('Trilha de auditoria do painel registrada.')">Ver auditoria</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="split-title">
+              <div>
+                <h3>Perdas por tipo</h3>
+                <p>Distribuição das faltas registradas por classificação operacional.</p>
+              </div>
+              <span class="tag red">18 perdas</span>
+            </div>
+            <div class="loss-chart" aria-label="Gráfico de perdas primárias e secundárias">
+              <div class="loss-row">
+                <header><span>Perda primária</span><strong>61% · 11 registros</strong></header>
+                <div class="loss-track"><div class="loss-fill primary-loss"></div></div>
+              </div>
+              <div class="loss-row">
+                <header><span>Perda secundária</span><strong>39% · 7 registros</strong></header>
+                <div class="loss-track"><div class="loss-fill secondary-loss"></div></div>
+              </div>
+            </div>
+            <div class="loss-kpis">
+              <div class="loss-kpi"><span>Impacto estimado</span><strong>18 vagas</strong></div>
+              <div class="loss-kpi"><span>Potencial de remanejamento</span><strong>7 vagas</strong></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-backdrop" id="passwordModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="passwordModalTitle">
+      <div class="modal-header">
+        <div>
+          <h3 id="passwordModalTitle">Recuperação de senha</h3>
+          <p>Informe o usuário ou documento vinculado ao cadastro para receber as instruções de recuperação.</p>
+        </div>
+        <button class="modal-close" type="button" onclick="closeModal('passwordModal')" aria-label="Fechar">×</button>
+      </div>
+      <div class="field">
+        <label>Usuário, CPF ou e-mail institucional</label>
+        <input id="recoveryUser" value="usuario.regulacao" />
+      </div>
+      <div class="field">
+        <label>Canal de envio</label>
+        <select id="recoveryChannel">
+          <option>E-mail institucional</option>
+          <option>Mensagem de texto</option>
+          <option>Contato da unidade gestora</option>
+        </select>
+      </div>
+      <div class="security-note">
+        Por segurança, o sistema envia um link temporário e registra a solicitação na trilha de auditoria.
+      </div>
+      <div class="actions">
+        <button class="btn primary" type="button" onclick="requestPasswordRecovery()">Enviar instruções</button>
+        <button class="btn secondary" type="button" onclick="closeModal('passwordModal')">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="absenceModal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="absenceModalTitle">
+      <div class="modal-header">
+        <div>
+          <h3 id="absenceModalTitle">Registrar falta</h3>
+          <p id="absenceModalSubtitle">Classifique a perda para atualizar absenteísmo e remanejamento de vaga.</p>
+        </div>
+        <button class="modal-close" type="button" onclick="closeModal('absenceModal')" aria-label="Fechar">×</button>
+      </div>
+      <div class="flow-step" style="margin-bottom:14px;">
+        <strong id="absencePatient">Paciente selecionado</strong>
+        <span id="absenceContext">Horário e procedimento</span>
+      </div>
+      <div class="choice-grid">
+        <button class="choice-card" type="button" onclick="confirmAbsence('perda primária')">
+          <strong>Perda primária</strong>
+          <span>Paciente não compareceu e a vaga não foi ocupada por outro usuário.</span>
+        </button>
+        <button class="choice-card" type="button" onclick="confirmAbsence('perda secundária')">
+          <strong>Perda secundária</strong>
+          <span>Houve perda após cancelamento, remarcação tardia ou falha de substituição.</span>
+        </button>
+      </div>
+      <div class="field">
+        <label>Observação</label>
+        <textarea id="absenceNote">Registro operacional realizado pela central após horário da consulta.</textarea>
+      </div>
+      <div class="actions">
+        <button class="btn secondary" type="button" onclick="closeModal('absenceModal')">Voltar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const titles = {
+      "login": ["Login do Sistema", "Entrada única com perfis para Unidade Executante, Secretaria Municipal de Saúde, Médico Regulador, Central e Paciente.", "Acesso"],
+      "dashboard": ["Visão Geral", "Resumo operacional por perfil e alertas prioritários.", "Operação"],
+      "envio-agenda": ["Nova Agenda Mensal", "Tela da Unidade Executante para informar agenda, escala e vagas.", "Agenda e CMCE"],
+      "validacao-agenda": ["Validação de Agenda", "Tela do Apoiador de Regulação para conferir, devolver ou cadastrar no CMCE.", "Agenda e CMCE"],
+      "inconsistencias": ["Pendências de Agenda", "Devolução da agenda à unidade executante e reenvio para validação.", "Agenda e CMCE"],
+      "solicitacao": ["Inserção de Solicitação", "Tela da Secretaria Municipal de Saúde (SMS) para registrar demanda clínica.", "Regulação"],
+      "avaliacao": ["Avaliação Médica Reguladora", "Tela do Médico Regulador para autorizar, recusar ou retornar solicitações.", "Regulação"],
+      "agendamento": ["Agendamento e Atendimento", "Escolha de vaga, contato com paciente e registro de presença ou falta.", "Regulação"],
+      "pacientes-confirmados": ["Pacientes Confirmados", "Acompanhamento de presenças confirmadas, cancelamentos, remarcações e registro de faltas.", "Regulação"],
+      "paciente": ["Confirmação do Paciente", "Canal automatizado para confirmação de presença e remarcação.", "Paciente"],
+      "central": ["Gestão de Cotas", "Distribuição e remanejamento de cotas entre GERES e municípios.", "Gestão"],
+      "filas": ["Filas de Espera", "Estratificação, filtros e acompanhamento de tempo médio de espera.", "Gestão"],
+      "indicadores": ["Indicadores e Relatórios", "Painel gerencial para acompanhamento da operação e exportação de dados.", "Indicadores"]
+    };
+
+    let currentAbsence = null;
+    let isAuthenticated = false;
+    let activeProfile = "unidade";
+
+    const profilePermissions = {
+      unidade: {
+        initial: "dashboard",
+        screens: ["dashboard", "envio-agenda", "inconsistencias", "agendamento", "pacientes-confirmados", "indicadores"]
+      },
+      apoiador: {
+        initial: "dashboard",
+        screens: ["dashboard", "validacao-agenda", "inconsistencias", "indicadores"]
+      },
+      sms: {
+        initial: "dashboard",
+        screens: ["dashboard", "solicitacao", "agendamento", "pacientes-confirmados", "paciente", "filas"]
+      },
+      medico: {
+        initial: "avaliacao",
+        screens: ["avaliacao", "filas", "indicadores"]
+      },
+      central: {
+        initial: "dashboard",
+        screens: ["dashboard", "central", "filas", "indicadores", "pacientes-confirmados"]
+      },
+      paciente: {
+        initial: "paciente",
+        screens: ["paciente"]
+      }
+    };
+
+    function getAllowedScreens() {
+      return profilePermissions[activeProfile]?.screens || profilePermissions.unidade.screens;
+    }
+
+    function getInitialScreen() {
+      return profilePermissions[activeProfile]?.initial || "dashboard";
+    }
+
+    function applyProfileNavigation() {
+      const allowed = new Set(getAllowedScreens());
+
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        const screen = btn.dataset.screen;
+        const isAllowed = screen === "login" ? false : allowed.has(screen);
+        btn.style.display = isAllowed ? "" : "none";
+        btn.disabled = !isAllowed;
+      });
+
+      document.querySelectorAll(".nav-section").forEach(section => {
+        const nav = section.nextElementSibling;
+        if (!nav?.classList.contains("nav")) return;
+        const hasVisibleButton = [...nav.querySelectorAll(".nav-btn")].some(btn => btn.style.display !== "none");
+        section.classList.toggle("is-hidden", !hasVisibleButton);
+        nav.classList.toggle("is-hidden", !hasVisibleButton);
+      });
+    }
+
+    function login() {
+      isAuthenticated = true;
+      activeProfile = document.querySelector(".role-card.active")?.dataset.profile || "unidade";
+      document.getElementById("appRoot").classList.remove("logged-out");
+      document.getElementById("appRoot").classList.add("authenticated");
+      applyProfileNavigation();
+      goTo(getInitialScreen());
+      toast("Acesso autorizado. Perfil operacional carregado.");
+    }
+
+    function switchProfile() {
+      isAuthenticated = false;
+      document.getElementById("appRoot").classList.remove("authenticated");
+      document.getElementById("appRoot").classList.add("logged-out");
+
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.style.display = "";
+        btn.disabled = false;
+        btn.classList.toggle("active", btn.dataset.screen === "login");
+      });
+
+      document.querySelectorAll(".nav-section, .nav").forEach(el => el.classList.remove("is-hidden"));
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      document.getElementById("login").classList.add("active");
+      document.getElementById("pageTitle").textContent = titles.login[0];
+      document.getElementById("pageSubtitle").textContent = titles.login[1];
+      document.getElementById("currentArea").textContent = titles.login[2];
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      toast("Selecione o perfil de acesso.");
+    }
+
+    function goTo(id) {
+      if (!isAuthenticated && id !== "login") {
+        document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+        document.getElementById("login").classList.add("active");
+        toast("Faça login para acessar as funcionalidades do sistema.");
+        return;
+      }
+
+      if (isAuthenticated && id !== "login" && !getAllowedScreens().includes(id)) {
+        toast("Funcionalidade indisponível para o perfil selecionado.");
+        id = getInitialScreen();
+      }
+
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.screen === id);
+      });
+
+      document.getElementById("pageTitle").textContent = titles[id][0];
+      document.getElementById("pageSubtitle").textContent = titles[id][1];
+      document.getElementById("currentArea").textContent = titles[id][2];
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function toastAndGo(msg, id, delay = 900) {
+      toast(msg);
+      setTimeout(() => goTo(id), delay);
+    }
+
+    function submitAgenda() {
+      const msg = "Agenda enviada com status Aguardando Validação.";
+      if (getAllowedScreens().includes("validacao-agenda")) {
+        toastAndGo(msg, "validacao-agenda");
+        return;
+      }
+
+      toast(msg);
+    }
+
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      modal.classList.add("show");
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      modal.classList.remove("show");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    function openPasswordModal() {
+      openModal("passwordModal");
+      document.getElementById("recoveryUser").focus();
+    }
+
+    function requestPasswordRecovery() {
+      const user = document.getElementById("recoveryUser").value.trim() || "usuário informado";
+      const channel = document.getElementById("recoveryChannel").value;
+      closeModal("passwordModal");
+      toast(`Instruções de recuperação enviadas para ${user} via ${channel}.`);
+    }
+
+    function openAbsenceModal(patient, time, procedure) {
+      currentAbsence = { patient, time, procedure };
+      document.getElementById("absencePatient").textContent = patient;
+      document.getElementById("absenceContext").textContent = `${time} · ${procedure} · Hospital Regional Agreste`;
+      openModal("absenceModal");
+    }
+
+    function confirmAbsence(type) {
+      if (!currentAbsence) return;
+      closeModal("absenceModal");
+      toast(`Falta registrada para ${currentAbsence.patient} como ${type}.`);
+      currentAbsence = null;
+    }
+
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => goTo(btn.dataset.screen));
+    });
+
+    document.querySelectorAll(".role-card").forEach(card => {
+      card.addEventListener("click", () => {
+        document.querySelectorAll(".role-card").forEach(c => c.classList.remove("active"));
+        card.classList.add("active");
+        activeProfile = card.dataset.profile || activeProfile;
+        document.getElementById("currentRole").textContent = card.dataset.role;
+        document.querySelector(".avatar").textContent = card.dataset.avatar;
+        if (isAuthenticated) {
+          applyProfileNavigation();
+          goTo(getInitialScreen());
+        }
+      });
+    });
+
+    document.querySelectorAll(".modal-backdrop").forEach(modal => {
+      modal.addEventListener("click", event => {
+        if (event.target === modal) closeModal(modal.id);
+      });
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        document.querySelectorAll(".modal-backdrop.show").forEach(modal => closeModal(modal.id));
+      }
+    });
+
+    function toast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      setTimeout(() => el.classList.remove("show"), 2600);
+    }
+  </script>
+</body>
+</html>
